@@ -1,0 +1,20 @@
+{
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "include": [
+        "no-cond-assign",
+        "no-await-in-loop",
+        "explicit-module-boundary-types",
+        "explicit-function-return-type",
+        "eqeqeq",
+        "default-param-last"
+      ]
+    }
+  },
+  "fmt": {
+    "options": {
+      "singleQuote": true
+    }
+  }
+}

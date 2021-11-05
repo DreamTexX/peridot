@@ -3,13 +3,13 @@ import {
   ConstructorType,
   EmptyConstructorType,
   Indexable,
-} from "./types.ts";
-import { Reference } from "./interfaces/reference.ts";
-import { InstanceProperty } from "./interfaces/instance-property.ts";
-import { StaticMetadata } from "./metadata.ts";
-import { Logger } from "./helpers/logger.ts";
-import { OnModuleInit } from "./interfaces/on-module-init.ts";
-import { TypeData } from "./interfaces/type-data.ts";
+} from './types.ts';
+import { Reference } from './interfaces/reference.ts';
+import { InstanceProperty } from './interfaces/instance-property.ts';
+import { StaticMetadata } from './metadata.ts';
+import { Logger } from './helpers/logger.ts';
+import { OnModuleInit } from './interfaces/on-module-init.ts';
+import { TypeData } from './interfaces/type-data.ts';
 
 export class Container {
   readonly #types: Map<string, TypeData>;
@@ -26,11 +26,13 @@ export class Container {
     return this.#name;
   }
 
-  constructor(name = "Container") {
+  constructor(name?: string) {
     this.#types = new Map();
     this.#linkedContainers = new Map();
     this.#resolvableLinks = [];
     this.#isBooted = false;
+    if (!name)
+      name = 'Container' + Math.random().toString(16).substr(2);
     this.#name = name;
   }
 
@@ -38,6 +40,10 @@ export class Container {
     if (!this.#resolvableLinks.includes(container)) {
       this.#resolvableLinks.push(container);
     }
+  }
+
+  public links(): IterableIterator<Container> {
+    return this.#linkedContainers.values();  
   }
 
   public provider(type: EmptyConstructorType): void {
@@ -52,6 +58,12 @@ export class Container {
     Logger.debug(
       `Registered object ${type.name} as consumer @ container ${this.#name}`,
     );
+  }
+
+  public *consumers(): IterableIterator<EmptyConstructorType> {
+    for (const typeData of this.#types.values())
+      if (!typeData.provider)
+        yield typeData.type;
   }
 
   public has(type: ConstructorType | string): boolean {
@@ -153,7 +165,7 @@ export class Container {
     }
     this.#types.set(identifier, {
       exported: false,
-      props: StaticMetadata.getMetadata(type.prototype, "PROPS") ?? [],
+      props: StaticMetadata.getMetadata(type.prototype, 'PROPS') ?? [],
       provider: provider,
       type: type,
     });
@@ -180,7 +192,7 @@ export class Container {
   }
 
   #create(type: EmptyConstructorType | string): void {
-    const identifier = typeof type === "string" ? type : type.name;
+    const identifier = typeof type === 'string' ? type : type.name;
     const resolved = this.#types.get(identifier);
     if (!resolved || resolved.instance) {
       return;
@@ -193,7 +205,7 @@ export class Container {
   }
 
   #resolve<T>(type: EmptyConstructorType | string): T {
-    const identifier = typeof type === "string" ? type : type.name;
+    const identifier = typeof type === 'string' ? type : type.name;
     const resolved = this.#types.get(identifier);
 
     if (!resolved) {

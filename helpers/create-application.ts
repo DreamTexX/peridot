@@ -3,7 +3,7 @@ import { EmptyConstructorType } from "../types.ts";
 import { StaticMetadata } from "../metadata.ts";
 import { Logger } from "./logger.ts";
 
-export function createApplication(type: EmptyConstructorType): boolean {
+export function createApplication(type: EmptyConstructorType): Container | undefined {
   try {
     const container = StaticMetadata.getMetadata<Container>(type, "CONTAINER");
     if (!container) {
@@ -11,13 +11,13 @@ export function createApplication(type: EmptyConstructorType): boolean {
         `${type.name} does not seem to be a module`,
         new Error(`${type.name} does not seem to be a module`),
       );
-      return false;
+      return undefined;
     }
     container.boot();
     Logger.info("Application started");
-    return true;
+    return container;
   } catch (err) {
     Logger.critical(err.message, err);
   }
-  return false;
+  return undefined;
 }

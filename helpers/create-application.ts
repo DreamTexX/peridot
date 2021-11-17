@@ -3,7 +3,10 @@ import { EmptyConstructorType } from "../types.ts";
 import { StaticMetadata } from "../metadata.ts";
 import { Logger } from "./logger.ts";
 
-export function createApplication(type: EmptyConstructorType): Container | undefined {
+export function createApplication(
+  type: EmptyConstructorType,
+): Container | undefined {
+  Logger.info("Booting Application");
   try {
     const container = StaticMetadata.getMetadata<Container>(type, "CONTAINER");
     if (!container) {

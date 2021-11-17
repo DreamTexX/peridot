@@ -3,19 +3,23 @@ import {
   ConstructorType,
   EmptyConstructorType,
   Indexable,
-} from './types.ts';
-import { Reference } from './interfaces/reference.ts';
-import { InstanceProperty } from './interfaces/instance-property.ts';
-import { StaticMetadata } from './metadata.ts';
-import { Logger } from './helpers/logger.ts';
-import { OnModuleInit } from './interfaces/on-module-init.ts';
-import { TypeData } from './interfaces/type-data.ts';
+} from "./types.ts";
+import { Reference } from "./interfaces/reference.ts";
+import { InstanceProperty } from "./interfaces/instance-property.ts";
+import { StaticMetadata } from "./metadata.ts";
+import { Logger } from "./helpers/logger.ts";
+import { OnModuleInit } from "./interfaces/on-module-init.ts";
+import { TypeData } from "./interfaces/type-data.ts";
+import { HookManager } from "./hook-manager.ts";
+import { HookType } from "./enums/hook.enum.ts";
+import { HookFunctions } from "./interfaces/hook-functions.interface.ts";
 
 export class Container {
   readonly #types: Map<string, TypeData>;
   readonly #name: string;
   readonly #resolvableLinks: Array<Container | Reference<Container>>;
   readonly #linkedContainers: Map<string, Container>;
+  readonly #hookManager: HookManager;
   #isBooted: boolean;
 
   get isBooted(): boolean {
@@ -30,9 +34,11 @@ export class Container {
     this.#types = new Map();
     this.#linkedContainers = new Map();
     this.#resolvableLinks = [];
+    this.#hookManager = new HookManager();
     this.#isBooted = false;
-    if (!name)
-      name = 'Container' + Math.random().toString(16).substr(2);
+    if (!name) {
+      name = "Container" + Math.random().toString(16).substr(2);
+    }
     this.#name = name;
   }
 
@@ -40,10 +46,6 @@ export class Container {
     if (!this.#resolvableLinks.includes(container)) {
       this.#resolvableLinks.push(container);
     }
-  }
-
-  public links(): IterableIterator<Container> {
-    return this.#linkedContainers.values();  
   }
 
   public provider(type: EmptyConstructorType): void {
@@ -60,10 +62,20 @@ export class Container {
     );
   }
 
+  public hook<T extends HookType>(type: T, fn: HookFunctions[T]): void {
+    this.#hookManager.hook(type, fn);
+  }
+
   public *consumers(): IterableIterator<EmptyConstructorType> {
-    for (const typeData of this.#types.values())
-      if (!typeData.provider)
+    for (const typeData of this.#types.values()) {
+      if (!typeData.provider) {
         yield typeData.type;
+      }
+    }
+  }
+
+  public links(): IterableIterator<Container> {
+    return this.#linkedContainers.values();
   }
 
   public has(type: ConstructorType | string): boolean {
@@ -122,9 +134,13 @@ export class Container {
     if (this.#isBooted) {
       throw new Error(`Container is already booted.`);
     }
+
     this.#isBooted = true;
 
     Logger.info(`Booting container "${this.#name}"`);
+    Logger.debug(`Calling pre module init hook`);
+    this.#hookManager.call(HookType.PreModuleInit, this);
+
     Logger.debug(`Resolving links to other containers`);
     for (const containerOrReference of this.#resolvableLinks) {
       this.#resolveLinkedContainer(containerOrReference);
@@ -151,11 +167,14 @@ export class Container {
         linked.boot();
       }
     }
+
+    Logger.debug(`Calling post module init hook`);
+    this.#hookManager.call(HookType.PostModuleInit, this);
   }
 
   #addType(type: EmptyConstructorType, provider: boolean): void {
     if (this.#isBooted) {
-      throw new Error(`Cannot add injectable after container is booted`);
+      throw new Error(`Cannot add type after container is booted`);
     }
     const identifier = type.name;
     if (this.#types.has(identifier)) {
@@ -165,7 +184,7 @@ export class Container {
     }
     this.#types.set(identifier, {
       exported: false,
-      props: StaticMetadata.getMetadata(type.prototype, 'PROPS') ?? [],
+      props: StaticMetadata.getMetadata(type.prototype, "PROPS") ?? [],
       provider: provider,
       type: type,
     });
@@ -186,26 +205,40 @@ export class Container {
       throw new Error(`Cannot link ${identifier} more than once.`);
     }
     this.#linkedContainers.set(identifier, container);
-    Logger.debug(
+    /*Logger.debug(
       `Container ${this.#name} is now linked with container ${container.name}`,
-    );
+    );*/
   }
 
   #create(type: EmptyConstructorType | string): void {
-    const identifier = typeof type === 'string' ? type : type.name;
+    const identifier = typeof type === "string" ? type : type.name;
     const resolved = this.#types.get(identifier);
     if (!resolved || resolved.instance) {
       return;
     }
 
+    Logger.debug(`Calling pre provider/consumer init hook`);
+    this.#hookManager.call(
+      resolved.provider ? HookType.PreProviderInit : HookType.PreConsumerInit,
+      this,
+      resolved,
+    );
+
     const clazz = resolved.type;
     const instance = new clazz();
     resolved.instance = instance;
     this.#inject(instance, resolved.props);
+
+    Logger.debug(`Calling post provider/consumer init hook`);
+    this.#hookManager.call(
+      resolved.provider ? HookType.PostProviderInit : HookType.PostConsumerInit,
+      this,
+      resolved,
+    );
   }
 
   #resolve<T>(type: EmptyConstructorType | string): T {
-    const identifier = typeof type === 'string' ? type : type.name;
+    const identifier = typeof type === "string" ? type : type.name;
     const resolved = this.#types.get(identifier);
 
     if (!resolved) {
@@ -239,9 +272,9 @@ export class Container {
       return resolved.instance as T;
     }
 
-    Logger.debug(
+    /*Logger.debug(
       `Resolving injectable ${identifier} @ container ${this.#name}`,
-    );
+    );*/
 
     this.#create(type);
     return resolved.instance! as T;

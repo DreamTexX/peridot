@@ -3,11 +3,15 @@
 FLAGS=--unstable --config deno.json
 PERMS=--allow-hrtime --allow-env
 
+.ONESHELL:
 example:
-	export LOG_LEVEL=INFO; deno run ${FLAGS} ${PERMS} example/main.ts
+	@start=$$(date +%s%N);
+	deno run ${FLAGS} ${PERMS} example/main.ts;
+	end=$$(date +%s%N);
+	printf "Execution time: %sms\n" $$( echo "scale = 10; ($$end - $$start) / 1000000" | bc -l );
 
 test:
-	export LOG_LEVEL=OFF; deno test ${FLAGS} ${PERMS} .
+	LOG_LEVEL=ERROR deno test ${FLAGS} ${PERMS} .
 
 fmt:
 	deno fmt ${FLAGS} .

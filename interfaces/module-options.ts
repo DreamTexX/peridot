@@ -1,5 +1,5 @@
-import { EmptyConstructorType } from "../types.ts";
-import { Reference } from "./reference.ts";
+import { EmptyConstructorType } from '../types.ts';
+import { Reference } from './reference.ts';
 
 export interface ModuleOptions {
   providers?: Array<EmptyConstructorType>;

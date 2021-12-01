@@ -1,5 +1,5 @@
-import { Inject, Logger, OnModuleInit } from "../../mod.ts";
-import { TestAService } from "./test-a.service.ts";
+import { Inject, Logger, OnModuleInit } from '../../mod.ts';
+import { TestAService } from './test-a.service.ts';
 
 export class TestAConsumer implements OnModuleInit {
   @Inject(TestAService)

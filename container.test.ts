@@ -3,16 +3,16 @@ import {
   assertExists,
   assertThrows,
   fail,
-} from "./vendor/https/deno.land/std/testing/asserts.ts";
-import { Container } from "./container.ts";
-import { forwardRef } from "./helpers/forward-ref.ts";
-import { Inject } from "./decorators/inject.decorator.ts";
-import { StaticMetadata } from "./metadata.ts";
-import { OnModuleInit } from "./interfaces/on-module-init.ts";
-import { HookType } from "./enums/hook.enum.ts";
-import { TypeData } from "./interfaces/type-data.ts";
+} from './vendor/https/deno.land/std/testing/asserts.ts';
+import { Container } from './container.ts';
+import { forwardRef } from './helpers/forward-ref.ts';
+import { Inject } from './decorators/inject.decorator.ts';
+import { StaticMetadata } from './metadata.ts';
+import { OnModuleInit } from './interfaces/on-module-init.ts';
+import { HookType } from './enums/hook.enum.ts';
+import { TypeData } from './interfaces/type-data.ts';
 
-Deno.test("only single instance getting created", () => {
+Deno.test('only single instance getting created', () => {
   StaticMetadata.clear();
 
   class Foo {}
@@ -29,7 +29,7 @@ Deno.test("only single instance getting created", () => {
   assertEquals(fooOne, fooTwo);
 });
 
-Deno.test("dependency injection", () => {
+Deno.test('dependency injection', () => {
   StaticMetadata.clear();
 
   class Foo {}
@@ -53,7 +53,7 @@ Deno.test("dependency injection", () => {
   assertEquals(bar.foo, foo);
 });
 
-Deno.test("injecting self as dependency", () => {
+Deno.test('injecting self as dependency', () => {
   StaticMetadata.clear();
 
   class SelfInjected {
@@ -71,7 +71,7 @@ Deno.test("injecting self as dependency", () => {
   assertEquals(selfInjectedInstantiated, selfInjectedInstantiated.selfInjected);
 });
 
-Deno.test("injecting circular dependencies", () => {
+Deno.test('injecting circular dependencies', () => {
   StaticMetadata.clear();
 
   class Foo {
@@ -98,7 +98,7 @@ Deno.test("injecting circular dependencies", () => {
   assertEquals(bar.foo, foo);
 });
 
-Deno.test("access only to exported types", () => {
+Deno.test('access only to exported types', () => {
   StaticMetadata.clear();
 
   class Foo {
@@ -119,13 +119,13 @@ Deno.test("access only to exported types", () => {
   assertThrows(
     () => container.resolve(Bar),
     undefined,
-    "needs to be exported to be used by other containers",
+    'needs to be exported to be used by other containers',
   );
   assertExists(container.resolve(Foo));
   assertExists(container.resolve(Foo)?.bar);
 });
 
-Deno.test("container links resolving correctly", () => {
+Deno.test('container links resolving correctly', () => {
   StaticMetadata.clear();
 
   class Foo {
@@ -144,14 +144,14 @@ Deno.test("container links resolving correctly", () => {
     bar!: Bar;
   }
 
-  const container = new Container("Foo and Bar");
+  const container = new Container('Foo and Bar');
   container.provider(Foo);
   container.provider(Bar);
   container.export(Foo);
   container.export(Bar);
   container.boot();
 
-  const container2 = new Container("FooBar");
+  const container2 = new Container('FooBar');
   container2.link(container);
   container2.provider(FooBar);
   container2.export(FooBar);
@@ -164,7 +164,7 @@ Deno.test("container links resolving correctly", () => {
   assertEquals(container.resolve(Bar), container2.resolve(FooBar).bar);
 });
 
-Deno.test("circular dependencies in linked containers", () => {
+Deno.test('circular dependencies in linked containers', () => {
   StaticMetadata.clear();
 
   class Foo {
@@ -189,13 +189,13 @@ Deno.test("circular dependencies in linked containers", () => {
     bar!: Bar;
   }
 
-  const container = new Container("Foo and Bar");
+  const container = new Container('Foo and Bar');
   container.provider(Foo);
   container.provider(Bar);
   container.export(Foo);
   container.export(Bar);
 
-  const container2 = new Container("FooBar");
+  const container2 = new Container('FooBar');
   container2.provider(FooBar);
   container2.export(FooBar);
 
@@ -210,7 +210,7 @@ Deno.test("circular dependencies in linked containers", () => {
   assertEquals(container2.resolve(FooBar), container.resolve(Bar).fooBar);
 });
 
-Deno.test("consumers cannot be exported", () => {
+Deno.test('consumers cannot be exported', () => {
   StaticMetadata.clear();
 
   class Consumer {}
@@ -220,11 +220,11 @@ Deno.test("consumers cannot be exported", () => {
   assertThrows(
     () => container.export(Consumer),
     undefined,
-    "Cannot export consumer",
+    'Cannot export consumer',
   );
 });
 
-Deno.test("consumer unresolvable", () => {
+Deno.test('consumer unresolvable', () => {
   StaticMetadata.clear();
 
   class Consumer {}
@@ -235,11 +235,11 @@ Deno.test("consumer unresolvable", () => {
   assertThrows(
     () => container.resolve(Consumer),
     undefined,
-    "is not marked as provider",
+    'is not marked as provider',
   );
 });
 
-Deno.test("module init function call", async () => {
+Deno.test('module init function call', async () => {
   StaticMetadata.clear();
   let promiseResolveFn: () => void;
   const promise = new Promise<void>((resolve) => {
@@ -261,7 +261,7 @@ Deno.test("module init function call", async () => {
   clearTimeout(i);
 });
 
-Deno.test("consumer gets injections", async () => {
+Deno.test('consumer gets injections', async () => {
   StaticMetadata.clear();
 
   let promiseResolverFn: (value: FooProvider) => void;
@@ -294,7 +294,7 @@ Deno.test("consumer gets injections", async () => {
   clearTimeout(i);
 });
 
-Deno.test("consumer list generator", () => {
+Deno.test('consumer list generator', () => {
   class Consumer1 {}
   class Consumer2 {}
   class Consumer3 {}
@@ -318,7 +318,7 @@ Deno.test("consumer list generator", () => {
   assertEquals(consumersFound, 3);
 });
 
-Deno.test("getting linked containers", () => {
+Deno.test('getting linked containers', () => {
   const container1 = new Container();
   const container2 = new Container();
   const container3 = new Container();
@@ -337,7 +337,7 @@ Deno.test("getting linked containers", () => {
   assertEquals(containersFound, 2);
 });
 
-Deno.test("hook functions", async () => {
+Deno.test('hook functions', async () => {
   function createPromiseAndResolverFn(): [
     (value: unknown) => void,
     Promise<unknown>,

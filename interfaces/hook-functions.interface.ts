@@ -1,15 +1,16 @@
-import { Container } from "../container.ts";
-import { HookType } from "../enums/hook.enum.ts";
-import { TypeData } from "./type-data.ts";
+/*import { Application } from '../application.ts';
+import { Container } from '../container.ts';
+import { HookType } from '../enums/hook.enum.ts';
+import { TypeData } from './type-data.ts';
 
+export type EmptyHookFn = () => void;
 export type PreModuleInitFn = (container: Container) => void;
 export type PostModuleInitFn = (container: Container) => void;
 export type PreConsumerInitFn = (container: Container, data: TypeData) => void;
 export type PostConsumerInitFn = (container: Container, data: TypeData) => void;
 export type PreProviderInitFn = (container: Container, data: TypeData) => void;
 export type PostProviderInitFn = (container: Container, data: TypeData) => void;
-export type PreApplicationInitFn = () => void;
-export type PostApplicationInitFn = () => void;
+export type PostApplicationInitFn = (application: Application) => void;
 
 export type AnyHookFunction =
   | PreModuleInitFn
@@ -18,16 +19,15 @@ export type AnyHookFunction =
   | PostConsumerInitFn
   | PreProviderInitFn
   | PostProviderInitFn
-  | PreApplicationInitFn
   | PostApplicationInitFn;
 
 export interface HookFunctions {
-  [HookType.PreModuleInit]: PreModuleInitFn;
-  [HookType.PostModuleInit]: PostModuleInitFn;
-  [HookType.PreConsumerInit]: PreConsumerInitFn;
-  [HookType.PostConsumerInit]: PostConsumerInitFn;
-  [HookType.PreProviderInit]: PreProviderInitFn;
-  [HookType.PostProviderInit]: PostProviderInitFn;
-  [HookType.PreApplicationInit]: PreApplicationInitFn;
-  [HookType.PostApplicationInit]: PostApplicationInitFn;
+  [HookType.PreModuleInit]: PreModuleInitFn | EmptyHookFn;
+  [HookType.PostModuleInit]: PostModuleInitFn | EmptyHookFn;
+  [HookType.PreConsumerInit]: PreConsumerInitFn | EmptyHookFn;
+  [HookType.PostConsumerInit]: PostConsumerInitFn | EmptyHookFn;
+  [HookType.PreProviderInit]: PreProviderInitFn | EmptyHookFn;
+  [HookType.PostProviderInit]: PostProviderInitFn | EmptyHookFn;
+  [HookType.PostApplicationInit]: PostApplicationInitFn | EmptyHookFn;
 }
+*/

@@ -1,3 +1,6 @@
+//TODO(DreamTexX): add method to add type and property metadata:
+// Metadata#defineMetadata(type, property, key, value)
+
 export class Metadata {
   #metadata: Map<unknown, Map<symbol | number | string, unknown>> = new Map();
 

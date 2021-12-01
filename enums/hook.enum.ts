@@ -1,3 +1,4 @@
+/*
 export enum HookType {
   PreModuleInit,
   PostModuleInit,
@@ -5,6 +6,6 @@ export enum HookType {
   PostConsumerInit,
   PreProviderInit,
   PostProviderInit,
-  PreApplicationInit,
   PostApplicationInit,
 }
+*/

@@ -1,5 +1,12 @@
-import { forwardRef, Inject, Logger, OnModuleInit } from "../../mod.ts";
-import { TestBService } from "../test-b/test-b.service.ts";
+import {
+  forwardRef,
+  Hook,
+  HookType,
+  Inject,
+  Logger,
+  OnModuleInit,
+} from '../../mod.ts';
+import { TestBService } from '../test-b/test-b.service.ts';
 
 export class TestAService implements OnModuleInit {
   @Inject(forwardRef(() => TestBService))
@@ -15,7 +22,12 @@ export class TestAService implements OnModuleInit {
     return this.fibonacci(num - 1) + this.fibonacci(num - 2);
   }
 
+  @Hook(HookType.PostProviderInit)
+  test(): void {
+    console.log(this.testBService);
+  }
+
   onModuleInit(): void {
-    Logger.info("Test A Service is up and running");
+    Logger.info('Test A Service is up and running');
   }
 }

@@ -1,4 +1,4 @@
-import { Reference } from "../interfaces/reference.ts";
+import { Reference } from '../interfaces/reference.ts';
 
 export function forwardRef<T>(ref: () => T): Reference<T> {
   return {

@@ -11,14 +11,19 @@ const _Logger = new class {
     if (level < this.#logLevel || this.#logLevel === LogLevel.OFF) {
       return;
     }
-    if (!color)
-      color = "\x1b[0m";
+    if (!color) {
+      color = '\x1b[0m';
+    }
 
     const now = new Date();
     const time =
       `${now.toLocaleDateString()} ${now.toLocaleTimeString()}.${now.getMilliseconds()}`;
 
-    console.log(`\x1b[2;37m${time} > ${color}${LogLevel[level].padStart(8, ' ')}\x1b[0m \x1b[2;37m| ${args}`);
+    console.log(
+      `\x1b[2;37m${time} > ${color}${
+        LogLevel[level].padStart(8, ' ')
+      }\x1b[0m \x1b[2;37m| ${args.join(' ')}`,
+    );
   }
 
   public debug(...args: unknown[]): void {

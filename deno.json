@@ -7,7 +7,6 @@
         "no-await-in-loop",
         "explicit-module-boundary-types",
         "explicit-function-return-type",
-        "eqeqeq",
         "default-param-last"
       ]
     }

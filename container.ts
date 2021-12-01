@@ -2,17 +2,19 @@ import {
   ClassType,
   ConstructorType,
   EmptyConstructorType,
+  HookFunction,
   Indexable,
-} from "./types.ts";
-import { Reference } from "./interfaces/reference.ts";
-import { InstanceProperty } from "./interfaces/instance-property.ts";
-import { StaticMetadata } from "./metadata.ts";
-import { Logger } from "./helpers/logger.ts";
-import { OnModuleInit } from "./interfaces/on-module-init.ts";
-import { TypeData } from "./interfaces/type-data.ts";
-import { HookManager } from "./hook-manager.ts";
-import { HookType } from "./enums/hook.enum.ts";
-import { HookFunctions } from "./interfaces/hook-functions.interface.ts";
+} from './types.ts';
+import { Reference } from './interfaces/reference.ts';
+import { InstanceProperty } from './interfaces/instance-property.ts';
+import { StaticMetadata } from './metadata.ts';
+import { Logger } from './helpers/logger.ts';
+import { OnModuleInit } from './interfaces/on-module-init.ts';
+import { TypeData } from './interfaces/type-data.ts';
+import { HookManager } from './hook-manager.ts';
+import { Application } from './application.ts';
+import { HookSubscriptionFilter } from "./interfaces/hook-subscription-filter.interface.ts";
+//import { METADATA_KEY_HOOKS } from "./decorators/hook.decorator.ts";
 
 export class Container {
   readonly #types: Map<string, TypeData>;
@@ -20,6 +22,7 @@ export class Container {
   readonly #resolvableLinks: Array<Container | Reference<Container>>;
   readonly #linkedContainers: Map<string, Container>;
   readonly #hookManager: HookManager;
+  readonly #application?: Application;
   #isBooted: boolean;
 
   get isBooted(): boolean {
@@ -30,16 +33,18 @@ export class Container {
     return this.#name;
   }
 
-  constructor(name?: string) {
+  constructor(
+    name?: string,
+    hookManager?: HookManager,
+    application?: Application,
+  ) {
     this.#types = new Map();
     this.#linkedContainers = new Map();
     this.#resolvableLinks = [];
-    this.#hookManager = new HookManager();
+    this.#hookManager = hookManager ?? new HookManager();
     this.#isBooted = false;
-    if (!name) {
-      name = "Container" + Math.random().toString(16).substr(2);
-    }
-    this.#name = name;
+    this.#application = application;
+    this.#name = name ?? 'Container' + Math.random().toString(16).substr(2);
   }
 
   public link(container: Container | Reference<Container>): void {
@@ -62,8 +67,11 @@ export class Container {
     );
   }
 
-  public hook<T extends HookType>(type: T, fn: HookFunctions[T]): void {
-    this.#hookManager.hook(type, fn);
+  public hook(
+    filter: HookSubscriptionFilter,
+    fn: HookFunction,
+  ): void {
+    this.#hookManager.subscribe(filter, fn);
   }
 
   public *consumers(): IterableIterator<EmptyConstructorType> {
@@ -139,7 +147,7 @@ export class Container {
 
     Logger.info(`Booting container "${this.#name}"`);
     Logger.debug(`Calling pre module init hook`);
-    this.#hookManager.call(HookType.PreModuleInit, this);
+    // this.#hookManager.call(HookType.PreModuleInit, this);
 
     Logger.debug(`Resolving links to other containers`);
     for (const containerOrReference of this.#resolvableLinks) {
@@ -169,7 +177,7 @@ export class Container {
     }
 
     Logger.debug(`Calling post module init hook`);
-    this.#hookManager.call(HookType.PostModuleInit, this);
+    // this.#hookManager.call(HookType.PostModuleInit, this);
   }
 
   #addType(type: EmptyConstructorType, provider: boolean): void {
@@ -184,7 +192,7 @@ export class Container {
     }
     this.#types.set(identifier, {
       exported: false,
-      props: StaticMetadata.getMetadata(type.prototype, "PROPS") ?? [],
+      props: StaticMetadata.getMetadata(type.prototype, 'PROPS') ?? [],
       provider: provider,
       type: type,
     });
@@ -211,18 +219,21 @@ export class Container {
   }
 
   #create(type: EmptyConstructorType | string): void {
-    const identifier = typeof type === "string" ? type : type.name;
+    const identifier = typeof type === 'string' ? type : type.name;
     const resolved = this.#types.get(identifier);
     if (!resolved || resolved.instance) {
       return;
     }
 
+    // const hooks = StaticMetadata.getMetadata(resolved, METADATA_KEY_HOOKS);
+    // for (const hook of hooks)
+
     Logger.debug(`Calling pre provider/consumer init hook`);
-    this.#hookManager.call(
-      resolved.provider ? HookType.PreProviderInit : HookType.PreConsumerInit,
-      this,
-      resolved,
-    );
+    // this.#hookManager.call(
+    //   resolved.provider ? HookType.PreProviderInit : HookType.PreConsumerInit,
+    //   this,
+    //   resolved,
+    // );
 
     const clazz = resolved.type;
     const instance = new clazz();
@@ -230,15 +241,15 @@ export class Container {
     this.#inject(instance, resolved.props);
 
     Logger.debug(`Calling post provider/consumer init hook`);
-    this.#hookManager.call(
-      resolved.provider ? HookType.PostProviderInit : HookType.PostConsumerInit,
-      this,
-      resolved,
-    );
+    // this.#hookManager.call(
+    //   resolved.provider ? HookType.PostProviderInit : HookType.PostConsumerInit,
+    //   this,
+    //   resolved,
+    // );
   }
 
   #resolve<T>(type: EmptyConstructorType | string): T {
-    const identifier = typeof type === "string" ? type : type.name;
+    const identifier = typeof type === 'string' ? type : type.name;
     const resolved = this.#types.get(identifier);
 
     if (!resolved) {

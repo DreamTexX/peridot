@@ -1,11 +1,12 @@
-import { HookExecutionData } from './interfaces/hook-execution-data.interface.ts';
-import { HookSubscriptionFilter } from './interfaces/hook-subscription-filter.interface.ts';
+import { Logger } from './helpers/logger.ts';
+import { HookData } from './interfaces/hook-data.interface.ts';
+import { HookFilter } from './interfaces/hook-filter.interface.ts';
 import { HookFunction } from './types.ts';
 
 export class HookManager {
-  readonly #hooks: Array<{ filter: HookSubscriptionFilter; fn: HookFunction }>;
+  readonly #hooks: Array<{ filter: HookFilter; fn: HookFunction }>;
 
-  get hooks(): Array<{ filter: HookSubscriptionFilter; fn: HookFunction }> {
+  get hooks(): Array<{ filter: HookFilter; fn: HookFunction }> {
     return this.#hooks;
   }
 
@@ -13,54 +14,37 @@ export class HookManager {
     this.#hooks = [];
   }
 
-  subscribe(filter: HookSubscriptionFilter, fn: HookFunction): void {
+  subscribe(filter: HookFilter, fn: HookFunction): void {
     this.#hooks.push({ filter, fn });
   }
 
-  execute(data: HookExecutionData): void {
-    this.#hooks.filter((hook) => {
-      const filters = hook.filter;
-      if (filters.application && filters.application !== data.application) {
-        return false;
-      }
-      if (filters.container && filters.container !== data.container) {
-        return false;
-      }
-      if (
-        (filters.type === 'provider' || filters.type === 'consumer') &&
-        filters.type !== data.kind
-      ) {
-        return false;
-      } else if (filters.type && filters.type !== data.type) {
-        return false;
-      }
-      if (filters.scope && filters.scope !== data.scope) {
-        return false;
-      }
-
-      return true;
-    }).forEach((hook) => {
-      hook.fn({
-        application: data.application,
-        container: data.container,
-        typeData: undefined,
-      });
-    });
-  }
-
-  /*hook<T extends HookType>(type: T, fn: HookFunction): void {
-    const hooks = this.#hooks.get(type) ?? [];
-    hooks.push(fn);
-    this.#hooks.set(type, hooks);
-  }
-
-  call<T extends HookType>(
-    type: T,
-    data: HookData,
+  execute(
+    data: HookFilter & HookData & { kind?: 'provider' | 'consumer' },
   ): void {
-    const hooks = this.#hooks.get(type) ?? [];
-    hooks.forEach((hook) => {
-      hook(data);
-    });
-  }*/
+    Logger.debug('Hook call:', data);
+    this.#hooks
+      .filter((hook) =>
+        (hook.filter.application === '*' && data.application !== undefined) ||
+        hook.filter.application === data.application
+      )
+      .filter((hook) =>
+        (hook.filter.container === '*' && data.container !== undefined) ||
+        hook.filter.container === data.container
+      )
+      .filter((hook) =>
+        (hook.filter.scope === '*' && data.scope !== undefined) ||
+        hook.filter.scope === data.scope
+      )
+      .filter((hook) =>
+        (hook.filter.type === '*' && data.type !== undefined) ||
+        hook.filter.type === data.kind || hook.filter.type === data.type
+      )
+      .forEach((hook) => {
+        hook.fn({
+          application: data.application,
+          container: data.container,
+          typeData: data.typeData,
+        });
+      });
+  }
 }

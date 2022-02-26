@@ -1,14 +1,14 @@
-import { Application } from './application.ts';
-import { Container } from './container.ts';
-import { HookManager } from './hook-manager.ts';
+// import { Application } from './application.ts';
+// import { Container } from './container.ts';
+// import { HookManager } from './hook-manager.ts';
 
-const application = new Application(class {});
-const container = new Container();
-class Type {}
+// const application = new Application(class {});
+// const container = new Container();
+// class Type {}
 
 //TODO(@DreamTexX): Writ tests, but it seems to work lol
 
-Deno.test('hook filtering', () => {
+/* Deno.test('hook filtering', () => {
   const hookManager = new HookManager();
   //Accept all:
   hookManager.subscribe({}, () => {
@@ -56,3 +56,4 @@ Deno.test('hook filtering', () => {
     scope: 'pre',
   });
 });
+ */

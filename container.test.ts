@@ -9,7 +9,6 @@ import { forwardRef } from './helpers/forward-ref.ts';
 import { Inject } from './decorators/inject.decorator.ts';
 import { StaticMetadata } from './metadata.ts';
 import { OnModuleInit } from './interfaces/on-module-init.ts';
-import { HookType } from './enums/hook.enum.ts';
 import { TypeData } from './interfaces/type-data.ts';
 
 Deno.test('only single instance getting created', () => {
@@ -359,17 +358,17 @@ Deno.test('hook functions', async () => {
   const container = new Container();
   container.provider(class TestProvider {});
   container.consumer(class TestConsumer {});
-  container.hook(HookType.PreConsumerInit, (c: Container, data: TypeData) => {
-    preConsumerInitCallback([c, data]);
+  container.hook({ container, type: 'consumer', scope: 'pre' }, (data) => {
+    preConsumerInitCallback([data?.container, data?.typeData]);
   });
-  container.hook(HookType.PostConsumerInit, (c: Container, data: TypeData) => {
-    postConsumerInitCallback([c, data]);
+  container.hook({ container, type: 'consumer', scope: 'post' }, (data) => {
+    postConsumerInitCallback([data?.container, data?.typeData]);
   });
-  container.hook(HookType.PreProviderInit, (c: Container, data: TypeData) => {
-    preProviderInitCallback([c, data]);
+  container.hook({ container, type: 'provider', scope: 'pre' }, (data) => {
+    preProviderInitCallback([data?.container, data?.typeData]);
   });
-  container.hook(HookType.PostProviderInit, (c: Container, data: TypeData) => {
-    postProviderInitCallback([c, data]);
+  container.hook({ container, type: 'provider', scope: 'post' }, (data) => {
+    postProviderInitCallback([data?.container, data?.typeData]);
   });
   container.boot();
 

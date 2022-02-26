@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Logger, OnModuleInit } from '../../mod.ts';
+import { forwardRef, Inject, Logger, OnModuleInit } from '../../../mod.ts';
 import { TestAService } from '../test-a/test-a.service.ts';
 
 export class TestBService implements OnModuleInit {

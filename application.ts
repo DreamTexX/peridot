@@ -1,14 +1,13 @@
 import { Container } from './container.ts';
 import { METADATA_KEY_MODULE } from './decorators/module.decorator.ts';
-import { HookType } from './enums/hook.enum.ts';
 import { forwardRef } from './helpers/forward-ref.ts';
 import { Logger } from './helpers/logger.ts';
 import { HookManager } from './hook-manager.ts';
-import { HookFunctions } from './interfaces/hook-functions.interface.ts';
+import { HookFilter } from './interfaces/hook-filter.interface.ts';
 import { ModuleOptions } from './interfaces/module-options.ts';
 import { Reference } from './interfaces/reference.ts';
 import { StaticMetadata } from './metadata.ts';
-import { EmptyConstructorType } from './types.ts';
+import { EmptyConstructorType, HookFunction } from './types.ts';
 
 //TODO(@DreamTexX): Add Test-Cases
 
@@ -23,27 +22,25 @@ export class Application {
     this.#rootContainer = this.#resolveContainer(rootModule);
   }
 
-  public hook<T extends HookType>(type: T, fn: HookFunctions[T]): void {
+  public hook(
+    filter: HookFilter,
+    fn: HookFunction,
+  ): void {
     if (!this.#rootContainer.isBooted) {
-      if (type === HookType.PostApplicationInit) {
-        // this.#hookManager.hook(type, fn);
-      } else {
-        for (const [_, container] of this.#containers.entries()) {
-          container.hook(type, fn);
-        }
-      }
+      this.#hookManager.subscribe(filter, fn);
     } else {
       Logger.warning('Cannot add hooks after application is booted');
     }
   }
 
   public boot(): boolean {
+    this.#hookManager.execute({ application: this, scope: 'pre' });
     if (this.#rootContainer.isBooted) {
       Logger.warning('Application is already booted');
       return false;
     }
     this.#rootContainer.boot();
-    // this.#hookManager.call(HookType.PostApplicationInit, this);
+    this.#hookManager.execute({ application: this, scope: 'post' });
     return true;
   }
 
@@ -54,9 +51,8 @@ export class Application {
 
   #createContainer(type: EmptyConstructorType): Container {
     const options: ModuleOptions =
-      StaticMetadata.getMetadata<ModuleOptions>(type, METADATA_KEY_MODULE) ??
-        {};
-    const container = new Container(type.name);
+      StaticMetadata.getMetadata(type, METADATA_KEY_MODULE) ?? {};
+    const container = new Container(type.name, this.#hookManager, this);
 
     for (const provider of options.providers ?? []) {
       container.provider(provider);

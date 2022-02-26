@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  Hook,
-  HookType,
-  Inject,
-  Logger,
-  OnModuleInit,
-} from '../../mod.ts';
+import { forwardRef, Inject, Logger, OnModuleInit } from '../../../mod.ts';
 import { TestBService } from '../test-b/test-b.service.ts';
 
 export class TestAService implements OnModuleInit {
@@ -20,11 +13,6 @@ export class TestAService implements OnModuleInit {
       return 1;
     }
     return this.fibonacci(num - 1) + this.fibonacci(num - 2);
-  }
-
-  @Hook(HookType.PostProviderInit)
-  test(): void {
-    console.log(this.testBService);
   }
 
   onModuleInit(): void {

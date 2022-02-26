@@ -22,7 +22,9 @@ const _Logger = new class {
     console.log(
       `\x1b[2;37m${time} > ${color}${
         LogLevel[level].padStart(8, ' ')
-      }\x1b[0m \x1b[2;37m| ${args.join(' ')}`,
+      }\x1b[0m \x1b[2;37m|`,
+      ...args,
+      '\x1b[0m',
     );
   }
 
@@ -43,7 +45,7 @@ const _Logger = new class {
   }
 
   public critical(...args: unknown[]): void {
-    this.#log(LogLevel.CRITICAL, '\x1b[0;31m', args);
+    this.#log(LogLevel.CRITICAL, '\x1b[0;31m', ...args);
   }
 }();
 

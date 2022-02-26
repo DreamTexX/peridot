@@ -13,8 +13,7 @@ import { OnModuleInit } from './interfaces/on-module-init.ts';
 import { TypeData } from './interfaces/type-data.ts';
 import { HookManager } from './hook-manager.ts';
 import { Application } from './application.ts';
-import { HookSubscriptionFilter } from "./interfaces/hook-subscription-filter.interface.ts";
-//import { METADATA_KEY_HOOKS } from "./decorators/hook.decorator.ts";
+import { HookFilter } from './interfaces/hook-filter.interface.ts';
 
 export class Container {
   readonly #types: Map<string, TypeData>;
@@ -68,7 +67,7 @@ export class Container {
   }
 
   public hook(
-    filter: HookSubscriptionFilter,
+    filter: HookFilter,
     fn: HookFunction,
   ): void {
     this.#hookManager.subscribe(filter, fn);
@@ -147,7 +146,11 @@ export class Container {
 
     Logger.info(`Booting container "${this.#name}"`);
     Logger.debug(`Calling pre module init hook`);
-    // this.#hookManager.call(HookType.PreModuleInit, this);
+    this.#hookManager.execute({
+      application: this.#application,
+      container: this,
+      scope: 'pre',
+    });
 
     Logger.debug(`Resolving links to other containers`);
     for (const containerOrReference of this.#resolvableLinks) {
@@ -177,7 +180,11 @@ export class Container {
     }
 
     Logger.debug(`Calling post module init hook`);
-    // this.#hookManager.call(HookType.PostModuleInit, this);
+    this.#hookManager.execute({
+      application: this.#application,
+      container: this,
+      scope: 'post',
+    });
   }
 
   #addType(type: EmptyConstructorType, provider: boolean): void {
@@ -218,6 +225,18 @@ export class Container {
     );*/
   }
 
+  #hook(instance: ClassType): void {
+    const hooks: Map<HookFilter, Array<HookFunction>> =
+      StaticMetadata.getMetadata(instance, 'HOOKS') ?? new Map();
+    for (const [filters, functions] of hooks.entries()) {
+      for (const fn of functions) {
+        //TODO(@DreamTexX): Debug logs
+        //TODO(@DreamTexX): Testing!!!! (lambda call testing, is instance available as this?)
+        this.#hookManager.subscribe(filters, (data) => fn.call(instance, data));
+      }
+    }
+  }
+
   #create(type: EmptyConstructorType | string): void {
     const identifier = typeof type === 'string' ? type : type.name;
     const resolved = this.#types.get(identifier);
@@ -225,27 +244,33 @@ export class Container {
       return;
     }
 
-    // const hooks = StaticMetadata.getMetadata(resolved, METADATA_KEY_HOOKS);
-    // for (const hook of hooks)
-
     Logger.debug(`Calling pre provider/consumer init hook`);
-    // this.#hookManager.call(
-    //   resolved.provider ? HookType.PreProviderInit : HookType.PreConsumerInit,
-    //   this,
-    //   resolved,
-    // );
+    this.#hookManager.execute({
+      application: this.#application,
+      container: this,
+      kind: resolved.provider ? 'provider' : 'consumer',
+      scope: 'pre',
+      type: resolved.type,
+      typeData: resolved,
+    });
 
     const clazz = resolved.type;
     const instance = new clazz();
+
+    this.#hook(instance);
+
     resolved.instance = instance;
     this.#inject(instance, resolved.props);
 
     Logger.debug(`Calling post provider/consumer init hook`);
-    // this.#hookManager.call(
-    //   resolved.provider ? HookType.PostProviderInit : HookType.PostConsumerInit,
-    //   this,
-    //   resolved,
-    // );
+    this.#hookManager.execute({
+      application: this.#application,
+      container: this,
+      kind: resolved.provider ? 'provider' : 'consumer',
+      scope: 'post',
+      type: resolved.type,
+      typeData: resolved,
+    });
   }
 
   #resolve<T>(type: EmptyConstructorType | string): T {

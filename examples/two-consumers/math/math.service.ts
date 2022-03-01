@@ -8,6 +8,6 @@ export class MathService {
   }
 
   public printCount(): void {
-    Logger.info("Counter:", this.#counter);
+    Logger.info('Counter:', this.#counter);
   }
 }

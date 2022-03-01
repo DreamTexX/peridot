@@ -225,12 +225,19 @@ export class Container {
     );*/
   }
 
-  #hook(instance: ClassType): void {
+  #hook(type: EmptyConstructorType, instance: ClassType): void {
     const hooks: Map<HookFilter, Array<HookFunction>> =
-      StaticMetadata.getMetadata(instance, 'HOOKS') ?? new Map();
+      StaticMetadata.get('HOOKS', type.prototype) ?? new Map();
     for (const [filters, functions] of hooks.entries()) {
+      Logger.debug(
+        'Registering',
+        functions.length,
+        `hook function${functions.length === 1 ? '' : 's'} for`,
+        instance,
+        'with filter',
+        filters,
+      );
       for (const fn of functions) {
-        //TODO(@DreamTexX): Debug logs
         //TODO(@DreamTexX): Testing!!!! (lambda call testing, is instance available as this?)
         this.#hookManager.subscribe(filters, (data) => fn.call(instance, data));
       }
@@ -257,7 +264,7 @@ export class Container {
     const clazz = resolved.type;
     const instance = new clazz();
 
-    this.#hook(instance);
+    this.#hook(resolved.type, instance);
 
     resolved.instance = instance;
     this.#inject(instance, resolved.props);

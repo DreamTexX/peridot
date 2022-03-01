@@ -9,7 +9,7 @@
       "name": "Launch Program",
       "type": "pwa-node",
       "program": "main.ts",
-      "cwd": "${workspaceFolder}/example/basic-injection",
+      "cwd": "${workspaceFolder}/examples/basic-injection",
       "runtimeExecutable": "deno",
       "runtimeArgs": [
         "run",

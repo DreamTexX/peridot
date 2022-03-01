@@ -6,7 +6,7 @@
 // const container = new Container();
 // class Type {}
 
-//TODO(@DreamTexX): Writ tests, but it seems to work lol
+//TODO(@DreamTexX): Write tests, but it seems to work lol
 
 /* Deno.test('hook filtering', () => {
   const hookManager = new HookManager();

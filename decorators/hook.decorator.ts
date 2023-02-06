@@ -1,14 +1,14 @@
-import { HookFilter } from '../interfaces/mod.ts';
+import { ExtendedHookFilter } from '../interfaces/mod.ts';
 import { StaticMetadata } from '../metadata.ts';
 import { ClassType, Indexable, TypedMethodDecorator } from '../types.ts';
 
-export function Hook(filter: HookFilter): TypedMethodDecorator {
+export function Hook(filter: ExtendedHookFilter): TypedMethodDecorator {
   return function (
     type: ClassType,
     property: string,
     _propertyDescriptor: PropertyDescriptor,
   ): void {
-    const hooks: Map<HookFilter, Array<unknown>> =
+    const hooks: Map<ExtendedHookFilter, Array<unknown>> =
       StaticMetadata.get('HOOKS', type) ?? new Map();
     if (!hooks.has(filter)) {
       hooks.set(filter, []);

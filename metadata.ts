@@ -4,6 +4,10 @@ export class Metadata {
     Map<symbol | string, Map<symbol | number | string, unknown>>
   > = new Map();
 
+  public debug(): void {
+    console.log(...this.#metadata.entries());
+  }
+
   /**
    * Stores metadata for the specified {@link type}.
    *

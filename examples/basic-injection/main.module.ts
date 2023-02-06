@@ -1,9 +1,9 @@
 import { Module } from '../../mod.ts';
-import { MainService } from './main.service.ts';
+import { MainConsumer } from './main.consumer.ts';
 import { MathModule } from './math/math.module.ts';
 
 @Module({
   imports: [MathModule],
-  providers: [MainService],
+  consumers: [MainConsumer],
 })
 export class MainModule {}

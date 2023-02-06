@@ -8,8 +8,9 @@ import { Container } from './container.ts';
 import { forwardRef } from './helpers/forward-ref.ts';
 import { Inject } from './decorators/inject.decorator.ts';
 import { StaticMetadata } from './metadata.ts';
-import { OnModuleInit } from './interfaces/on-module-init.ts';
 import { TypeData } from './interfaces/type-data.ts';
+import { Hook } from './decorators/hook.decorator.ts';
+import { PostModuleInit } from './decorators/hooks/post-module-init.decorator.ts';
 
 Deno.test('only single instance getting created', () => {
   StaticMetadata.clear();
@@ -238,43 +239,17 @@ Deno.test('consumer unresolvable', () => {
   );
 });
 
-Deno.test('module init function call', async () => {
+Deno.test('consumer gets injections', () => {
   StaticMetadata.clear();
-  let promiseResolveFn: () => void;
-  const promise = new Promise<void>((resolve) => {
-    promiseResolveFn = resolve;
-  });
-
-  class Consumer implements OnModuleInit {
-    onModuleInit(): void {
-      promiseResolveFn();
-    }
-  }
-
-  const container = new Container();
-  container.consumer(Consumer);
-  container.boot();
-
-  const i = setTimeout(fail, 1000);
-  await promise;
-  clearTimeout(i);
-});
-
-Deno.test('consumer gets injections', async () => {
-  StaticMetadata.clear();
-
-  let promiseResolverFn: (value: FooProvider) => void;
-  const promise = new Promise<FooProvider>((resolve) => {
-    promiseResolverFn = resolve;
-  });
 
   class FooProvider {}
-  class BarConsumer implements OnModuleInit {
+  class BarConsumer {
     @Inject(forwardRef(() => FooProvider))
     private foo!: FooProvider;
 
-    onModuleInit(): void {
-      promiseResolverFn(this.foo);
+    @PostModuleInit()
+    onModuleInit(): FooProvider {
+      return this.foo;
     }
   }
 
@@ -287,10 +262,8 @@ Deno.test('consumer gets injections', async () => {
   const foo = container.resolve(FooProvider);
   assertExists(foo);
 
-  const i = setTimeout(fail, 1000);
-  const fooInBar = await promise;
-  assertEquals(foo, fooInBar);
-  clearTimeout(i);
+  const bar = container.unsafeGetInstance<BarConsumer>(BarConsumer)
+  assertEquals(foo, bar?.onModuleInit());
 });
 
 Deno.test('consumer list generator', () => {

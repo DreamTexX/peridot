@@ -7,7 +7,6 @@ export class MathService {
 
   @Hook({
     application: '*',
-    container: '*',
     type: MathService,
     scope: 'post',
   })

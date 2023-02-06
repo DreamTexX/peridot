@@ -1,19 +1,19 @@
 import {
+  Application,
   ClassType,
   ConstructorType,
   EmptyConstructorType,
+  ExtendedHookFilter,
+  HookFilter,
   HookFunction,
+  HookManager,
   Indexable,
-} from './types.ts';
-import { Reference } from './interfaces/reference.ts';
-import { InstanceProperty } from './interfaces/instance-property.ts';
-import { StaticMetadata } from './metadata.ts';
-import { Logger } from './helpers/logger.ts';
-import { OnModuleInit } from './interfaces/on-module-init.ts';
-import { TypeData } from './interfaces/type-data.ts';
-import { HookManager } from './hook-manager.ts';
-import { Application } from './application.ts';
-import { HookFilter } from './interfaces/hook-filter.interface.ts';
+  InstanceProperty,
+  Logger,
+  Reference,
+  StaticMetadata,
+  TypeData,
+} from './mod.ts';
 
 export class Container {
   readonly #types: Map<string, TypeData>;
@@ -120,6 +120,21 @@ export class Container {
     throw new Error(`${identifier} is not known to this container.`);
   }
 
+  /**
+   * This method will return an instance of the requested consumer or provider.
+   * Warning: this method does not do any checks, it is intended for testing purposes only.
+   * 
+   * @param type Class or name of provider or consumer that should be resolved
+   */
+  public unsafeGetInstance<T>(type: ConstructorType | string): T | undefined {
+    const identifier = (<ConstructorType> type).name ?? <string> type;
+    const resolved = this.#types.get(identifier);
+    if (resolved) {
+      return resolved.instance as T;
+    }
+    return undefined;
+  }
+
   public export(type: EmptyConstructorType): void {
     if (this.#isBooted) {
       throw new Error(`Cannot export types after container is booted`);
@@ -163,15 +178,6 @@ export class Container {
     }
 
     Logger.info(`Booted container "${this.#name}"`);
-
-    for (const type of this.#types.values()) {
-      if (!type.instance) {
-        continue;
-      }
-      if ((<OnModuleInit> type.instance).onModuleInit) {
-        (<OnModuleInit> type.instance).onModuleInit();
-      }
-    }
 
     for (const linked of this.#linkedContainers.values()) {
       if (!linked.isBooted) {
@@ -226,7 +232,7 @@ export class Container {
   }
 
   #hook(type: EmptyConstructorType, instance: ClassType): void {
-    const hooks: Map<HookFilter, Array<HookFunction>> =
+    const hooks: Map<ExtendedHookFilter & HookFilter, Array<HookFunction>> =
       StaticMetadata.get('HOOKS', type.prototype) ?? new Map();
     for (const [filters, functions] of hooks.entries()) {
       Logger.debug(
@@ -237,6 +243,9 @@ export class Container {
         'with filter',
         filters,
       );
+      if (filters.module === 'this') {
+        filters.container = this;
+      }
       for (const fn of functions) {
         //TODO(@DreamTexX): Testing!!!! (lambda call testing, is instance available as this?)
         this.#hookManager.subscribe(filters, (data) => fn.call(instance, data));

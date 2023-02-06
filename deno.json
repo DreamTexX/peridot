@@ -15,5 +15,10 @@
     "options": {
       "singleQuote": true
     }
+  },
+  "tasks": {
+    "test": "LOG_LEVEL=ERROR deno test --unstable --allow-env .",
+    "bench": "LOG_LEVEL=OFF deno bench --unstable --allow-env .",
+    "example1": "cd examples/basic-injection && LOG_LEVEL=DEBUG deno run --unstable --allow-env main.ts"
   }
 }

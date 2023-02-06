@@ -1,10 +1,11 @@
-import { Inject, Logger, OnModuleInit } from '../../mod.ts';
+import { Inject, Logger, PostModuleInit } from '../../mod.ts';
 import { MathService } from './math/math.service.ts';
 
-export class MainService implements OnModuleInit {
+export class MainConsumer {
   @Inject(MathService)
   aService!: MathService;
 
+  @PostModuleInit()
   onModuleInit(): void {
     Logger.info('5 + 10 =', this.aService.add(5, 10));
   }

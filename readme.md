@@ -25,20 +25,140 @@ include scopes so that this behavior could be customized.
 The following steps will be done while booting the application:
 
 1. Decorators will be resolved and metadata fills up.
-2. The root module will boot all linked modules.
-3. Each module will create a single instance of each consumer and provider.
-4. Each module then will inject all dependencies into the consumer and provider.
-5. The module will call `onModuleInit()` to signal that injected elements are
-   ready to use.
+2. An application instance is being created
+3. The application will boot the root module and all linked modules.
+4. Each module will create a single instance of each consumer and provider.
+5. Each module then will inject all dependencies into the consumer and provider.
+
+Most of these steps will execute hooks. You will read more on hooks later on.
 
 Now you may ask "so I cannot use injected elements in the constructor?" - and
 you are right. You can't. First of all, because I was too lazy to implement
 this, and handling circular dependencies this way is less pain. To execute code
-after the module is ready you can use the `onModuleInit()` function from the
+after the module is ready you ~~can use the `onModuleInit()` function from the
 `OnModuleInit` interface. This will ensure that all required injections are done
-and safe to use.
+and safe to use.~~ must use hooks. A hook decorator is available for this.
+Currently hooks are a bit complicated, so read the dedicated section!
+`OnModuleInit` will be deprecated and removed soon!
 
-## Simple examples
+## Application
+
+## Hooks
+
+There are three ways to register hooks. The most important one is by using the
+`@Hook(filter: HookFilter)` decorator:
+
+```ts
+// Register a hook in a consumer/provider
+class ProviderOrConsumer {
+  @Hook({/*filter*/})
+  public yourCoolHookFunction(data: HookData | undefined) {
+  }
+}
+```
+
+You can also register hooks directly in your application:
+
+```ts
+const app = new Application(class EmptyModule {});
+app.hook({ application: app, scope: 'post' }, (data: HookData) => {
+  Logger.info('Application started');
+});
+```
+
+Hooks will always be **executed before or after an initialization action**. With
+initialization action, the process of booting containers, creating instances of
+consumers or providers is meant. For example, before an instance of a provider
+is created, a hook is executed. After this provider is hydrated with all its
+dependencies ("ready initialized") another hook is executed. Before and after a
+module (container) is booted, hooks get executed. Before and after the
+application is booted, hooks are executed.
+
+### Filters
+
+When taking a look at the filters it does seem a bit complicated, and it is. Or
+not idk. You have four criteria: application, container, type and scope.
+
+<table>
+  <thead>
+    <tr>
+      <th>Criteria</th>
+      <th>Value</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3">application</td>
+      <td>application instance</td>
+      <td>Hook will only get executed if application value matches provided application</td>
+    </tr>
+    <tr>
+      <td><code>'*'</code></td>
+      <td>Hook gets executed regardless the application value</td>
+    </tr>
+    <tr>
+      <td><code>undefined</code></td>
+      <td>Hook only gets executed when no application is provided</td>
+    </tr>
+    <tr>
+      <td rowspan="3">container</td>
+      <td>container instance</td>
+      <td>Hook will only get executed if container value matches provided container</td>
+    </tr>
+    <tr>
+      <td><code>'*'</code></td>
+      <td>Hook gets executed regardless the container value</td>
+    </tr>
+    <tr>
+      <td><code>undefined</code></td>
+      <td>Hook only gets executed when no container is provided</td>
+    </tr>
+    <tr>
+      <td rowspan="5">type</td>
+      <td>some raw provider/consumer class</td>
+      <td>Hook will only get executed if type value matches provided type</td>
+    </tr>
+    <tr>
+      <td><code>'*'</code></td>
+      <td>Hook gets executed regardless the type value</td>
+    </tr>
+    <tr>
+      <td><code>undefined</code></td>
+      <td>Hook only gets executed when no type is provided</td>
+    </tr>
+    <tr>
+      <td><code>'provider'</code></td>
+      <td>Hook only gets executed when type is a provider</td>
+    </tr>
+    <tr>
+      <td><code>'consumer'</code></td>
+      <td>Hook only gets executed when type is a consumer</td>
+    </tr>
+    <tr>
+      <td rowspan="3">scope</td>
+      <td><code>'pre'</code></td>
+      <td>Hook gets executed on pre-initialization events (before a container is booted, an instance is created or the application is booted)</td>
+    </tr>
+    <tr>
+      <td><code>'post'</code></td>
+      <td>Hook gets executed on after-initialization events (after a container is booted, an instance is created or the application is booted)</td>
+    </tr>
+    <tr>
+      <td><code>'*'</code></td>
+      <td>Hook gets executed regardless the scope value</td>
+    </tr>
+  </tbody>
+</table>
+
+### Examples
+
+> Example will be added in the future
+
+## Complete examples
+
+> WARNING: The following examples are outdated, please take a look at the
+> examples folder for more recent (and working) examples!
 
 A complete example can be found in the example folder of this repo.
 

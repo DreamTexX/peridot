@@ -1,5 +1,7 @@
 # Peridot
 
+> WARNING: This readme currently is outdated. Please see [examples](examples/) for some working code.
+
 ## Terminology
 
 | Term               | Description                                                       |
